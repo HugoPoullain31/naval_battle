@@ -1,0 +1,181 @@
+/* Fond avec image */
+body {
+    font-family: 'Arial', sans-serif;
+    text-align: center;
+    color: white;
+    background: url("../static/imageaccueill.jpg") no-repeat center center fixed;
+    background-size: cover;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+/* Fond semi-transparent */
+.background-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+}
+
+/* Conteneur du jeu */
+.game-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    margin-top: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Grille */
+.grid-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+/* Grille de jeu */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(10, 50px);
+    grid-template-rows: repeat(10, 50px);
+    border: 2px solid white;
+    position: relative;
+}
+
+/* Cases de la grille */
+.grid-cell {
+    width: 50px;
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid white;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Numéros et Lettres */
+.numbers, .letters {
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+}
+
+/* Numéros en haut */
+.numbers {
+    justify-content: center;
+    gap: 1px;
+    width: 520px;
+}
+
+.numbers span {
+    width: 50px;
+    text-align: center;
+}
+
+.letters {
+    flex-direction: column;
+    position: absolute;
+    left: -35px;
+    top: 25px;
+}
+
+.letters span {
+    height: 50px;
+    width: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.boats-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Bateaux sur le côté */
+.boat {
+    background-color: blue;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: grab;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    width: 50px;
+    position: relative;
+}
+
+/* Taille des bateaux */
+#boat-1 { height: 250px; } /* Porte-avions (5 cases) */
+#boat-2 { height: 200px; } /* Croiseur (4 cases) */
+#boat-3, #boat-4 { height: 150px; } /* Sous-marins (3 cases) */
+#boat-5 { height: 100px; } /* Torpilleur (2 cases) */
+
+/* Correction pour que les bateaux prennent bien plusieurs cases */
+.boat[data-orientation="horizontal"] {
+    height: 50px;
+    width: auto;
+}
+
+.boat[data-orientation="vertical"] {
+    width: 50px;
+}
+
+/* Drag & Drop actif */
+.boat.dragging {
+    opacity: 0.5;
+}
+
+/* Boutons */
+button {
+    margin-top: 20px;
+    padding: 15px 40px;
+    font-size: 20px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(45deg, #ff4500, #ff0000);
+    color: white;
+    cursor: pointer;
+    position: relative;
+    z-index: 3;
+}
+
+button:disabled {
+    background: grey;
+    cursor: not-allowed;
+}
+
+/* Bouton retour */
+.back-button {
+    display: inline-block;
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+    padding: 12px 30px;
+    border: 2px solid white;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    transition: 0.3s;
+}
+
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
