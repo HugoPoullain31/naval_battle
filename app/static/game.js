@@ -114,7 +114,8 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(data => {
             if (data.status === "ready") {
                 alert("Les deux joueurs sont prêts !");
-                window.location.href = "/battle";
+                window.location.href = "/battle/" + playerId;
+
             } else {
                 alert("En attente du deuxième joueur...");
             }

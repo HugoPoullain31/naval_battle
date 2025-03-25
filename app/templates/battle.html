@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Bataille Navale - Combat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='battle.css') }}">
+</head>
+<body>
+    <div class="background-overlay"></div>
+    <div class="battle-container">
+        <h1>🎯 Bataille Navale 🎯</h1>
+        <h2>Joueur : {{ player_id }}</h2>
+        <div class="grids">
+            <div>
+                <h3>Votre grille</h3>
+                <div id="your-grid" class="grid"></div>
+            </div>
+            <div>
+                <h3>Grille ennemie</h3>
+                <div id="enemy-grid" class="grid"></div>
+            </div>
+        </div>
+        <p id="turn-indicator">Chargement du tour...</p>
+        <a href="/mode" class="back-button">⬅ Retour</a>
+    </div>
+    <script>
+        const playerId = "{{ player_id }}";
+    </script>
+    <script src="{{ url_for('static', filename='battle.js') }}"></script>
+</body>
+</html>
