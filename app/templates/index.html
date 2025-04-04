@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accueil - Naval Battle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='accueil.css') }}">
+</head>
+<body>
+    <div class="background-overlay"></div> <!-- Fond semi-transparent ajouté -->
+
+    <div class="content">
+        <header>
+            <h1 class="title">⚓ Naval Battle ⚓</h1>
+        </header>
+
+        <main>
+            <h2 class="welcome-text">Bienvenue dans la bataille !</h2>
+            <p class="subtitle">Préparez-vous à couler la flotte ennemie !</p>
+            <a href="/mode" class="button">⚔️ Commencer une partie</a>
+        </main>
+
+        <footer>
+            <p>© 2025 Naval Battle - Que la mer soit clémente ! 🌊</p>
+        </footer>
+    </div>
+</body>
+</html>

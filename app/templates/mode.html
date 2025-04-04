@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choix du Mode - Naval Battle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='mode.css') }}">
+</head>
+<body>
+    <div class="background-overlay"></div> 
+
+    <div class="content">
+        <header>
+            <h1 class="title">⚓ Choisissez votre mode de jeu ⚓</h1>
+        </header>
+
+        <main>
+            <div class="mode-container">
+                <a href="/game/1v1" class="mode-button">👥 1 VS 1</a>
+                <a href="/game/1vIA" class="mode-button">🤖 1 VS IA</a>
+            </div>
+        </main>
+
+        <footer>
+            <a href="/" class="back-button">⬅ Retour</a>
+        </footer>
+    </div>
+</body>
+</html>
