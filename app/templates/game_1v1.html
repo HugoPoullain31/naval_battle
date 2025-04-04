@@ -10,9 +10,11 @@
     <div class="content">
         <h1>🎮 Mode 1 VS 1</h1>
         <p>Donnez cette adresse IP au second joueur :</p>
-        <strong>http://{{ ip }}:5000/game/1v1/player2</strong>
+        <strong>http://{{ ip }}:5000/game/1v1/{{ game_id }}/player2</strong>
         <br><br>
         <form method="POST" action="/join">
+            <input type="hidden" name="player_role" value="player1">
+            <input type="hidden" name="game_id" value="{{ game_id }}">
             <label for="player_name">Entrez votre prénom :</label><br><br>
             <input type="text" name="player_name" required>
             <br><br>

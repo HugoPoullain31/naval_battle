@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function loadShips() {
-        fetch(`/get_ships/${playerId}`)
+        fetch(`/get_ships/${gameId}/${playerId}`)
             .then(res => res.json())
             .then(data => {
                 if (data.status === "success") {
@@ -47,39 +47,37 @@ document.addEventListener("DOMContentLoaded", () => {
     function fire(row, col, cell) {
         if (!isYourTurn || gameOver || cell.classList.contains("hit") || cell.classList.contains("miss")) return;
 
-        fetch("/fire", {
+        fetch(`/fire`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ player_id: playerId, row, col })
+            body: JSON.stringify({ player_id: playerId, row, col, game_id: gameId })
         })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "success") {
-                    if (data.result === "hit") {
-                        cell.classList.add("hit");
-                        cell.innerHTML = "💥";
-                    } else {
-                        cell.classList.add("miss");
-                        cell.innerHTML = "❌";
-                    }
-
-                    checkVictory();
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "success") {
+                if (data.result === "hit") {
+                    cell.classList.add("hit");
+                    cell.innerHTML = "💥";
                 } else {
-                    if (data.message === "Ce n'est pas votre tour") {
-                        const previousText = turnIndicator.textContent;
-                        turnIndicator.textContent = "⚠️ Ce n'est pas votre tour !";
-                        setTimeout(() => {
-                            turnIndicator.textContent = previousText;
-                        }, 2000);
-                    } else {
-                        alert(data.message || "Erreur lors du tir");
-                    }
+                    cell.classList.add("miss");
+                    cell.innerHTML = "❌";
                 }
-            });
+
+                isYourTurn = false;
+                checkVictory();
+            } else {
+                if (data.message === "Ce n'est pas votre tour") {
+                    turnIndicator.textContent = "⚠️ Ce n'est pas votre tour !";
+                    setTimeout(updateTurn, 1500);
+                } else {
+                    alert(data.message || "Erreur lors du tir");
+                }
+            }
+        });
     }
 
     function pollHits() {
-        fetch(`/received_shots/${playerId}`)
+        fetch(`/received_shots/${gameId}/${playerId}`)
             .then(res => res.json())
             .then(data => {
                 if (data.status === "success") {
@@ -89,7 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         const result = shot.result;
 
                         const cell = yourGrid.querySelector(`[data-row="${r}"][data-col="${c}"]`);
-                        if (cell && !cell.classList.contains("hit") && !cell.classList.contains("miss")) {
+                        if (cell && !cell.classList.contains("hit") && !cell.classList.contains("miss") && !cell.classList.contains("ship-hit")) {
                             if (result === "hit") {
                                 cell.classList.add("ship-hit");
                                 cell.innerHTML = "🔥";
@@ -103,33 +101,57 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
-    function checkVictory() {
-        fetch(`/received_shots/${enemyId}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "success") {
-                    fetch(`/get_ships/${enemyId}`)
-                        .then(res => res.json())
-                        .then(enemyData => {
-                            if (enemyData.status === "success") {
-                                const totalParts = enemyData.ships.reduce((sum, ship) => sum + ship.size, 0);
-                                const hits = data.shots.filter(s => s.result === "hit").length;
-                                if (hits >= totalParts) {
-                                    turnIndicator.innerHTML = "🎉 Vous avez gagné ! 🎉";
-                                    gameOver = true;
-                                } else {
-                                    endTurn();
-                                }
-                            }
-                        });
-                }
-            });
+    async function checkVictory() {
+        const resEnemyShots = await fetch(`/received_shots/${gameId}/${enemyId}`);
+        const enemyData = await resEnemyShots.json();
 
-        fetch(`/received_shots/${playerId}`)
+        let enemyDefeated = false;
+        let playerDefeated = false;
+
+        if (enemyData.status === "success") {
+            const resEnemyShips = await fetch(`/get_ships/${gameId}/${enemyId}`);
+            const enemyShips = await resEnemyShips.json();
+
+            if (enemyShips.status === "success") {
+                const totalParts = enemyShips.ships.reduce((sum, ship) => sum + ship.size, 0);
+                const hits = enemyData.shots.filter(s => s.result === "hit").length;
+                if (hits >= totalParts) {
+                    turnIndicator.innerHTML = "🎉 Vous avez gagné ! 🎉";
+                    document.getElementById("victory-popup").classList.remove("hidden");
+                    gameOver = true;
+                    enemyDefeated = true;
+                }
+            }
+        }
+
+        const resOwnShots = await fetch(`/received_shots/${gameId}/${playerId}`);
+        const ownData = await resOwnShots.json();
+
+        if (ownData.status === "success") {
+            const resOwnShips = await fetch(`/get_ships/${gameId}/${playerId}`);
+            const ownShips = await resOwnShips.json();
+
+            if (ownShips.status === "success") {
+                const totalParts = ownShips.ships.reduce((sum, ship) => sum + ship.size, 0);
+                const hits = ownData.shots.filter(s => s.result === "hit").length;
+                if (hits >= totalParts) {
+                    turnIndicator.innerHTML = "💀 Vous avez perdu... 💀";
+                    document.getElementById("defeat-popup").classList.remove("hidden");
+                    gameOver = true;
+                    playerDefeated = true;
+                }
+            }
+        }
+
+        if (!enemyDefeated && !playerDefeated) {
+            setTimeout(updateTurn, 500); 
+        }
+
+        fetch(`/received_shots/${gameId}/${playerId}`)
             .then(res => res.json())
             .then(data => {
                 if (data.status === "success") {
-                    fetch(`/get_ships/${playerId}`)
+                    fetch(`/get_ships/${gameId}/${playerId}`)
                         .then(res => res.json())
                         .then(ownData => {
                             if (ownData.status === "success") {
@@ -137,6 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 const hits = data.shots.filter(s => s.result === "hit").length;
                                 if (hits >= totalParts) {
                                     turnIndicator.innerHTML = "💀 Vous avez perdu... 💀";
+                                    document.getElementById("defeat-popup").classList.remove("hidden");
                                     gameOver = true;
                                 }
                             }
@@ -145,28 +168,27 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
-    function endTurn() {
-        fetch("/next_turn", { method: "POST" }).then(() => {
-            isYourTurn = false;
-            updateTurn();
-        });
-    }
-
     function updateTurn() {
-        fetch(`/turn/${playerId}`)
+        if (gameOver) return;
+    
+        fetch(`/turn/${gameId}/${playerId}`)
             .then(res => res.json())
             .then(data => {
                 isYourTurn = data.your_turn;
+    
                 turnIndicator.textContent = isYourTurn
                     ? "🎯 À vous de tirer !"
                     : "⏳ En attente de l'adversaire...";
+    
+                pollHits();
+                checkVictory(); 
+    
                 if (!isYourTurn && !gameOver) {
                     setTimeout(updateTurn, 1500);
-                } else if (isYourTurn && !gameOver) {
-                    pollHits();
                 }
             });
     }
+    
 
     createGrid(yourGrid, false);
     createGrid(enemyGrid, true);

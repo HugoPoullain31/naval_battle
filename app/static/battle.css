@@ -41,33 +41,30 @@ body {
     width: 40px;
     height: 40px;
     display: flex;
-    align-items: center;
     justify-content: center;
-    font-size: 20px;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
 }
 
 .ship-cell {
     background-color: blue;
 }
 
-/* ✅ Quand un bateau est touché sur ta grille */
-.ship-hit {
-    background-color: darkred;
-    animation: pulse-red 0.4s;
-    color: white;
-}
-
-/* ✅ Quand un tir touche un bateau ennemi */
 .hit {
     background-color: red;
     animation: flash 0.3s;
 }
 
-/* ✅ Tir manqué */
 .miss {
     background-color: gray;
     animation: pulse 0.3s;
-    color: white;
+}
+
+.ship-hit {
+    background-color: darkred;
+    animation: burn 0.4s ease-in-out infinite alternate;
+    color: orange;
 }
 
 @keyframes flash {
@@ -76,13 +73,13 @@ body {
 }
 
 @keyframes pulse {
-    0% { transform: scale(1.2); }
+    0% { transform: scale(1.1); }
     100% { transform: scale(1); }
 }
 
-@keyframes pulse-red {
-    0% { background-color: orange; }
-    100% { background-color: darkred; }
+@keyframes burn {
+    0% { box-shadow: 0 0 5px red; }
+    100% { box-shadow: 0 0 15px orange; }
 }
 
 .back-button {
@@ -93,7 +90,8 @@ body {
     text-decoration: none;
     background: rgba(255, 255, 255, 0.2);
     border-radius: 8px;
-    transition: background 0.3s ease;
+    font-weight: bold;
+    transition: background 0.3s;
 }
 
 .back-button:hover {
@@ -101,7 +99,69 @@ body {
 }
 
 #turn-indicator {
-    font-size: 20px;
-    margin-top: 20px;
+    font-size: 1.2em;
     font-weight: bold;
+    margin-top: 20px;
+}
+
+.popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-content {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    color: #111;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+    animation: zoomIn 0.3s ease-out;
+    max-width: 90%;
+    width: 400px;
+}
+
+.popup-content h2 {
+    font-size: 2em;
+    margin-bottom: 20px;
+    color: #111;
+}
+
+.popup-button {
+    display: inline-block;
+    padding: 12px 28px;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: white;
+    background: #007bff;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.3s;
+}
+
+.popup-button:hover {
+    background: #0056b3;
+}
+
+.hidden {
+    display: none;
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.7);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
 }

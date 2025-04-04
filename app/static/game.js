@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const startGameButton = document.getElementById("start-game");
 
     const playerId = localStorage.getItem("player_id");
+    const gameId = localStorage.getItem("game_id");
     let placedShips = [];
 
     for (let row = 0; row < 10; row++) {
@@ -92,11 +93,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     startGameButton.addEventListener("click", () => {
-        if (!playerId) return alert("Nom du joueur manquant");
+        if (!playerId || !gameId) return alert("Nom ou game_id manquant");
+
         fetch("/save_ships", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ player_id: playerId, ships: placedShips }),
+            body: JSON.stringify({ player_id: playerId, game_id: gameId, ships: placedShips }),
         })
         .then(res => res.json())
         .then(data => {
@@ -109,15 +111,15 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch("/confirm_ships", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ game_id: gameId })
         })
         .then(res => res.json())
         .then(data => {
             if (data.status === "ready") {
-                alert("Les deux joueurs sont prêts !");
-                window.location.href = "/battle/" + playerId;
-
+                window.location.href = `/battle/${gameId}/${playerId}`;
             } else {
                 alert("En attente du deuxième joueur...");
+                setTimeout(checkBothPlayersReady, 1500);
             }
         });
     }

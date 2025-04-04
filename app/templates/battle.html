@@ -9,23 +9,44 @@
     <div class="background-overlay"></div>
     <div class="battle-container">
         <h1>🎯 Bataille Navale 🎯</h1>
-        <h2>Joueur : {{ player_id }}</h2>
+        <h2>Joueur : {{ player_name }}</h2>
         <div class="grids">
             <div>
                 <h3>Votre grille</h3>
                 <div id="your-grid" class="grid"></div>
             </div>
             <div>
-                <h3>Grille ennemie</h3>
+                <h3>Grille de {{ enemy_name }}</h3>
                 <div id="enemy-grid" class="grid"></div>
             </div>
         </div>
         <p id="turn-indicator">Chargement du tour...</p>
         <a href="/mode" class="back-button">⬅ Retour</a>
     </div>
+
+    <!-- Popups -->
+    <div id="victory-popup" class="popup hidden">
+        <div class="popup-content">
+            <h2>🎉 Victoire ! 🎉</h2>
+            <p>Félicitations, vous avez gagné la bataille navale !</p>
+            <a href="/mode" class="back-button">↩ Retour au menu</a>
+        </div>
+    </div>
+    <div id="defeat-popup" class="popup hidden">
+        <div class="popup-content">
+            <h2>💀 Défaite... 💀</h2>
+            <p>Vous avez perdu la bataille. Rejouez pour votre revanche !</p>
+            <a href="/mode" class="back-button">↩ Retour au menu</a>
+        </div>
+    </div>
+
     <script>
         const playerId = "{{ player_id }}";
+        const playerName = "{{ player_name }}";
+        const enemyName = "{{ enemy_name }}";
+        const gameId = "{{ game_id }}";
     </script>
+
     <script src="{{ url_for('static', filename='battle.js') }}"></script>
 </body>
 </html>

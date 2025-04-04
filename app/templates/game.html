@@ -43,7 +43,10 @@
 
     <script>
         const playerId = "{{ player_id }}";
+        const gameId = "{{ game_id }}";
         localStorage.setItem("player_id", playerId);
+        localStorage.setItem("game_id", gameId);
+    </script>
     </script>
     <script src="{{ url_for('static', filename='game.js') }}"></script>
 </body>
