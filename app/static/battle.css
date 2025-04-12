@@ -67,6 +67,15 @@ body {
     color: orange;
 }
 
+
+.ship {
+    background-color: blue;
+}
+
+.ship-hit {
+    background-color: darkred !important;
+}
+
 @keyframes flash {
     0% { background-color: yellow; }
     100% { background-color: red; }

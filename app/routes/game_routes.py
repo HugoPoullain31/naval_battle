@@ -2,6 +2,7 @@ import csv
 import os
 import socket
 import uuid 
+from .ia import generate_ai_ships
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 
 game_bp = Blueprint("game", __name__)
@@ -14,17 +15,14 @@ players = {}
 # Initialisation fichiers
 if not os.path.exists(CSV_FILE):
     with open(CSV_FILE, "w", newline="") as f:
-        writer = csv.writer(f)
+        writer = csv.writer(f, delimiter=';')  # Ajout
         writer.writerow(["game_id", "player_id", "row", "col", "size", "orientation"])
-
-if not os.path.exists(TURN_FILE):
-    with open(TURN_FILE, "w") as f:
-        f.write("")
 
 if not os.path.exists(SHOTS_FILE):
     with open(SHOTS_FILE, "w", newline="") as f:
-        writer = csv.writer(f)
+        writer = csv.writer(f, delimiter=';')  # Ajout
         writer.writerow(["game_id", "target_player", "row", "col", "result"])
+
 
 def get_local_ip():
     try:
@@ -39,14 +37,14 @@ def get_local_ip():
 def save_ships_csv(game_id, player_id, ships):
     existing_rows = []
     with open(CSV_FILE, "r") as f:
-        reader = csv.DictReader(f)
+        reader = csv.DictReader(f, delimiter=';')  # Ajout du délimiteur
         for row in reader:
             if row["game_id"] != game_id or row["player_id"] != player_id:
                 existing_rows.append(row)
 
     with open(CSV_FILE, "w", newline="") as f:
         fieldnames = ["game_id", "player_id", "row", "col", "size", "orientation"]
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=';')  # Ajout du délimiteur
         writer.writeheader()
         for row in existing_rows:
             writer.writerow(row)
@@ -63,7 +61,7 @@ def save_ships_csv(game_id, player_id, ships):
 def get_ships_csv(game_id, player_id):
     ships = []
     with open(CSV_FILE, "r") as f:
-        reader = csv.DictReader(f)
+        reader = csv.DictReader(f, delimiter=';')  # Ajout du délimiteur
         for row in reader:
             if row["game_id"] == game_id and row["player_id"] == player_id:
                 ships.append({
@@ -74,10 +72,12 @@ def get_ships_csv(game_id, player_id):
                 })
     return ships
 
+
 def save_shot(game_id, target_player, row, col, result):
     with open(SHOTS_FILE, "a", newline="") as f:
-        writer = csv.writer(f)
+        writer = csv.writer(f, delimiter=';')  # Ajout du délimiteur
         writer.writerow([game_id, target_player, row, col, result])
+
 
 def get_received_shots(game_id, player_id):
     shots = []
@@ -89,7 +89,7 @@ def get_received_shots(game_id, player_id):
             ships_coords.add((r, c))
 
     with open(SHOTS_FILE, "r") as f:
-        reader = csv.DictReader(f)
+        reader = csv.DictReader(f, delimiter=';')  # Ajout du délimiteur
         for row in reader:
             if row["game_id"] == game_id and row["target_player"] == player_id:
                 r, c = int(row["row"]), int(row["col"])
@@ -100,6 +100,41 @@ def get_received_shots(game_id, player_id):
                         "result": row["result"]
                     })
     return shots
+
+
+def log_game_history(game_id, player_name, opponent_name, turn_number, row, col, result, opponent_ships, winner=None):
+    file_path = "games_history.csv"
+    
+    if not os.path.exists(file_path):
+        with open(file_path, mode="w", newline="") as f:
+            writer = csv.writer(f, delimiter=';')  # Ajout du délimiteur
+            writer.writerow([
+                "game_id",
+                "player_name",
+                "opponent_name",
+                "turn_number",
+                "row",
+                "col",
+                "result",
+                "opponent_ship_positions",
+                "winner"
+            ])
+
+    with open(file_path, mode="a", newline="") as f:
+        writer = csv.writer(f, delimiter=';')  # Ajout du délimiteur
+        writer.writerow([
+            game_id,
+            player_name,
+            opponent_name,
+            turn_number,
+            row,
+            col,
+            result,
+            str(opponent_ships),
+            winner or ""
+        ])
+
+
 
 # ROUTES
 @game_bp.route("/")
@@ -203,6 +238,7 @@ def fire():
     if not all([x is not None, y is not None, player, game_id]):
         return jsonify({"status": "error", "message": "Données incomplètes"}), 400
 
+    # Lire le joueur dont c'est le tour
     current_turn = None
     if os.path.exists(TURN_FILE):
         with open(TURN_FILE, "r") as f:
@@ -214,22 +250,53 @@ def fire():
     if current_turn != player:
         return jsonify({"status": "error", "message": "Ce n'est pas votre tour"}), 403
 
-    target_player = "player2" if player == "player1" else "player1"
+    # Déterminer le joueur ciblé en fonction du mode (1vs1 ou IA)
+    if player == "player":
+        target_player = "ai"
+    elif player == "ai":
+        target_player = "player"
+    elif player == "player1":
+        target_player = "player2"
+    elif player == "player2":
+        target_player = "player1"
+    else:
+        return jsonify({"status": "error", "message": "Joueur invalide"}), 400
+
+    # Charger les bateaux de l'adversaire
     ships = get_ships_csv(game_id, target_player)
 
+    result = "miss"
     for ship in ships:
         row, col, size, orientation = ship["row"], ship["col"], ship["size"], ship["orientation"]
         for i in range(size):
             ship_row = row + i if orientation == "vertical" else row
             ship_col = col + i if orientation == "horizontal" else col
             if ship_row == x and ship_col == y:
-                save_shot(game_id, target_player, x, y, "hit")
-                update_turn_file(game_id, target_player)
-                return jsonify({"status": "success", "result": "hit"})
+                result = "hit"
 
-    save_shot(game_id, target_player, x, y, "miss")
+    save_shot(game_id, target_player, x, y, result)
     update_turn_file(game_id, target_player)
-    return jsonify({"status": "success", "result": "miss"})
+
+    # Historique
+    turn_number = 0
+    if os.path.exists("games_history.csv"):
+        with open("games_history.csv", "r") as f:
+            turn_number = sum(1 for line in f if line.startswith(game_id))
+
+    log_game_history(
+        game_id=game_id,
+        player_name=players.get(f"{game_id}:{player}", player),
+        opponent_name=players.get(f"{game_id}:{target_player}", target_player),
+        turn_number=turn_number + 1,
+        row=x,
+        col=y,
+        result=result,
+        opponent_ships=ships
+    )
+
+    return jsonify({"status": "success", "result": result})
+
+
 
 def update_turn_file(game_id, next_player):
     lines = []
@@ -285,3 +352,32 @@ def next_turn():
     update_turn_file(game_id, new_turn)
 
     return jsonify({"status": "success", "next_turn": new_turn})
+
+@game_bp.route("/game/1vsIA")
+def game_1vs_ia_redirect():
+    game_id = str(uuid.uuid4())[:8]
+    return redirect(url_for("game.game_1vs_ia", game_id=game_id))
+
+@game_bp.route("/game/1vsIA/<game_id>")
+def game_1vs_ia(game_id):
+    return render_template("game_vs_ia.html", game_id=game_id)
+
+
+@game_bp.route("/start_game_vs_ai", methods=["POST"])
+def start_game_vs_ai():
+    data = request.get_json()
+    player_ships = data.get("ships")
+    if not player_ships:
+        return jsonify({"status": "error", "message": "Aucun bateau envoyé"}), 400
+
+    game_id = str(uuid.uuid4())[:8]
+    save_ships_csv(game_id, "player", player_ships)
+    ai_ships = generate_ai_ships()
+    save_ships_csv(game_id, "ai", ai_ships)
+    update_turn_file(game_id, "player")
+    return jsonify({"status": "success", "game_id": game_id})
+
+
+@game_bp.route("/battle_ia/<game_id>/<player_id>")
+def battle_ia(game_id, player_id):
+    return render_template("battle_ia.html", game_id=game_id, player_id=player_id)

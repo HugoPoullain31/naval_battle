@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Bataille Navale vs IA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='battle.css') }}">
+</head>
+<body>
+    <div class="background-overlay"></div>
+    <h1>⚓ Bataille Navale ⚓</h1>
+    <h2>Joueur : player</h2>
+
+    <div class="grids">
+        <div>
+            <h3>Votre grille</h3>
+            <div class="grid" id="player-grid"></div>
+        </div>
+        <div>
+            <h3>Grille de l'IA</h3>
+            <div class="grid" id="enemy-grid"></div>
+        </div>
+    </div>
+
+    <p id="turn-indicator">🎯 À vous de tirer !</p>
+    <a href="/mode" class="back-button">⬅ Retour</a>
+
+    <script>
+        const gameId = "{{ game_id }}";
+    </script>
+    <script src="{{ url_for('static', filename='battle_ia.js') }}"></script>
+</body>
+</html>

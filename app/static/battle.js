@@ -144,9 +144,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (!enemyDefeated && !playerDefeated) {
-            setTimeout(updateTurn, 500); 
+            setTimeout(updateTurn, 500);
         }
+    }
 
+    function forceDefeatPopup() {
+        // ⚠️ Vérifie tout le temps si on a perdu, même si on n’a rien fait
         fetch(`/received_shots/${gameId}/${playerId}`)
             .then(res => res.json())
             .then(data => {
@@ -157,7 +160,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             if (ownData.status === "success") {
                                 const totalParts = ownData.ships.reduce((sum, ship) => sum + ship.size, 0);
                                 const hits = data.shots.filter(s => s.result === "hit").length;
-                                if (hits >= totalParts) {
+                                if (hits >= totalParts && !gameOver) {
                                     turnIndicator.innerHTML = "💀 Vous avez perdu... 💀";
                                     document.getElementById("defeat-popup").classList.remove("hidden");
                                     gameOver = true;
@@ -169,27 +172,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function updateTurn() {
-        if (gameOver) return;
-    
         fetch(`/turn/${gameId}/${playerId}`)
             .then(res => res.json())
             .then(data => {
                 isYourTurn = data.your_turn;
-    
+
                 turnIndicator.textContent = isYourTurn
                     ? "🎯 À vous de tirer !"
                     : "⏳ En attente de l'adversaire...";
-    
+
                 pollHits();
-                checkVictory(); 
-    
+                forceDefeatPopup(); // Vérifie en continu pour afficher défaite
+
                 if (!isYourTurn && !gameOver) {
                     setTimeout(updateTurn, 1500);
                 }
             });
     }
-    
 
+    // Initialisation
     createGrid(yourGrid, false);
     createGrid(enemyGrid, true);
     loadShips();
