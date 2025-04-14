@@ -10,7 +10,7 @@
     <h1>⚓ Bataille Navale ⚓</h1>
     <h2>Joueur : player</h2>
 
-    <div class="grids">
+    <div class="grids"> <!-- <- changement ici -->
         <div>
             <h3>Votre grille</h3>
             <div class="grid" id="player-grid"></div>
@@ -23,6 +23,22 @@
 
     <p id="turn-indicator">🎯 À vous de tirer !</p>
     <a href="/mode" class="back-button">⬅ Retour</a>
+
+    <!-- Popup Victoire -->
+    <div id="victory-popup" class="popup hidden">
+        <div class="popup-content">
+            <h2>🎉 Vous avez gagné ! 🎉</h2>
+            <a href="/mode" class="popup-button">Retour au menu</a>
+        </div>
+    </div>
+
+    <!-- Popup Défaite -->
+    <div id="defeat-popup" class="popup hidden">
+        <div class="popup-content">
+            <h2>💀 Vous avez perdu... 💀</h2>
+            <a href="/mode" class="popup-button">Retour au menu</a>
+        </div>
+    </div>
 
     <script>
         const gameId = "{{ game_id }}";

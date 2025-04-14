@@ -5,6 +5,8 @@ const turnIndicator = document.getElementById("turn-indicator");
 let canPlay = true;
 
 function createGrid(gridElement, isClickable = false) {
+    gridElement.innerHTML = "";
+
     for (let row = 0; row < 10; row++) {
         for (let col = 0; col < 10; col++) {
             const cell = document.createElement("div");
@@ -43,7 +45,7 @@ async function loadReceivedShots() {
             if (cell) {
                 if (shot.result === "hit") {
                     cell.classList.add("hit");
-                    cell.classList.add("ship-hit");  // effet spécial si tu veux
+                    cell.classList.add("ship-hit");
                 } else {
                     cell.classList.add("miss");
                 }
@@ -89,9 +91,19 @@ async function handlePlayerShot(e) {
     const data = await res.json();
     if (data.status === "success") {
         cell.classList.add(data.result === "hit" ? "hit" : "miss");
-        turnIndicator.textContent = "⏳ L'IA joue...";
-        await delay(1000);
-        await iaPlay();
+
+        if (data.victory) {
+            turnIndicator.textContent = "🎉 Vous avez gagné ! 🎉";
+            document.getElementById("victory-popup").classList.remove("hidden");
+        } else if (data.defeat) {
+            turnIndicator.textContent = "💀 Vous avez perdu... 💀";
+            document.getElementById("defeat-popup").classList.remove("hidden");
+        } else {
+            turnIndicator.textContent = "⏳ L'IA joue...";
+            await delay(1000);
+            await iaPlay();
+        }
+
     } else {
         turnIndicator.textContent = data.message;
         canPlay = true;
@@ -110,9 +122,24 @@ async function iaPlay() {
         })
     });
 
-    await loadReceivedShots();  // tirs de l'IA sur ta grille
-    turnIndicator.textContent = "🎯 À vous de tirer !";
-    canPlay = true;
+    const data = await res.json();
+
+    await loadReceivedShots();
+
+    if (data.defeat) {
+        // IA a perdu => joueur a gagné
+        turnIndicator.textContent = "🎉 Vous avez gagné ! 🎉";
+        document.getElementById("victory-popup").classList.remove("hidden");
+        canPlay = false;
+    } else if (data.victory) {
+        // IA a gagné => joueur a perdu
+        turnIndicator.textContent = "💀 Vous avez perdu... 💀";
+        document.getElementById("defeat-popup").classList.remove("hidden");
+        canPlay = false;
+    } else {
+        turnIndicator.textContent = "🎯 À vous de tirer !";
+        canPlay = true;
+    }
 }
 
 function delay(ms) {

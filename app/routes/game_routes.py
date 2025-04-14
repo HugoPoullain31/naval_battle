@@ -227,6 +227,7 @@ def get_ships(game_id, player_id):
         return jsonify({"status": "success", "ships": ships})
     return jsonify({"status": "error", "message": "Aucun bateau trouvé"}), 404
 
+
 @game_bp.route("/fire", methods=["POST"])
 def fire():
     data = request.json
@@ -235,10 +236,10 @@ def fire():
     player = data.get("player_id")
     game_id = data.get("game_id")
 
-    if not all([x is not None, y is not None, player, game_id]):
+    if not all([player, game_id]):
         return jsonify({"status": "error", "message": "Données incomplètes"}), 400
 
-    # Lire le joueur dont c'est le tour
+    # Vérifie le tour
     current_turn = None
     if os.path.exists(TURN_FILE):
         with open(TURN_FILE, "r") as f:
@@ -250,11 +251,13 @@ def fire():
     if current_turn != player:
         return jsonify({"status": "error", "message": "Ce n'est pas votre tour"}), 403
 
-    # Déterminer le joueur ciblé en fonction du mode (1vs1 ou IA)
+    # Détermine la cible
     if player == "player":
         target_player = "ai"
     elif player == "ai":
         target_player = "player"
+        from .ia import ai_select_target
+        x, y = ai_select_target(game_id, target_player)
     elif player == "player1":
         target_player = "player2"
     elif player == "player2":
@@ -262,22 +265,55 @@ def fire():
     else:
         return jsonify({"status": "error", "message": "Joueur invalide"}), 400
 
-    # Charger les bateaux de l'adversaire
+    # Vérifie si le tir touche un bateau
     ships = get_ships_csv(game_id, target_player)
-
     result = "miss"
     for ship in ships:
-        row, col, size, orientation = ship["row"], ship["col"], ship["size"], ship["orientation"]
-        for i in range(size):
-            ship_row = row + i if orientation == "vertical" else row
-            ship_col = col + i if orientation == "horizontal" else col
-            if ship_row == x and ship_col == y:
+        for i in range(ship["size"]):
+            r = ship["row"] + i if ship["orientation"] == "vertical" else ship["row"]
+            c = ship["col"] + i if ship["orientation"] == "horizontal" else ship["col"]
+            if r == x and c == y:
                 result = "hit"
 
     save_shot(game_id, target_player, x, y, result)
-    update_turn_file(game_id, target_player)
 
-    # Historique
+    # Vérifie si la partie est finie AVANT de changer de tour
+    def count_hits(target):
+        count = 0
+        with open(SHOTS_FILE, "r") as f:
+            reader = csv.DictReader(f, delimiter=';')
+            for row in reader:
+                if row["game_id"] == game_id and row["target_player"] == target and row["result"] == "hit":
+                    count += 1
+        return count
+
+    total_parts_ai = sum(s["size"] for s in get_ships_csv(game_id, "ai"))
+    total_parts_player = sum(s["size"] for s in get_ships_csv(game_id, "player"))
+
+    hits_ai = count_hits("ai")
+    hits_player = count_hits("player")
+
+    victory = False
+    defeat = False
+
+    if player == "player":
+        if hits_ai >= total_parts_ai:
+            victory = True
+        elif hits_player >= total_parts_player:
+            defeat = True
+    elif player == "ai":
+        if hits_player >= total_parts_player:
+            victory = True
+        elif hits_ai >= total_parts_ai:
+            defeat = True
+
+
+
+    # Mise à jour du tour SEULEMENT si la partie continue
+    if not victory and not defeat:
+        update_turn_file(game_id, target_player)
+
+    # Log historique
     turn_number = 0
     if os.path.exists("games_history.csv"):
         with open("games_history.csv", "r") as f:
@@ -294,7 +330,16 @@ def fire():
         opponent_ships=ships
     )
 
-    return jsonify({"status": "success", "result": result})
+    return jsonify({
+        "status": "success",
+        "result": result,
+        "row": x,
+        "col": y,
+        "victory": victory,
+        "defeat": defeat
+    })
+
+
 
 
 
